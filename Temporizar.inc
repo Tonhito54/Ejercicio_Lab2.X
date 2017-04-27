@@ -1,3 +1,5 @@
+
+;TEMPORIZADORES
 TEMPORIZAR:
     ;VENTANA 0 DISPLAY 6
     ;se asigna un valor de 0 al display 6
@@ -27,7 +29,8 @@ DECREMENTO:
     MOVLW   .59
     MOVWF   INI_SEGUNDOS
 	GOTO	TEMPORIZAR
-	
+
+;CONTINUA DECREMENTANDO (VALORES NEGATIVOS)
 NEGATIVO:				;CONTEOS NEGATIVOS
     BTFSS   PORTD,1			;testeo del bit 1 del puerto D
 	GOTO	CONT_NEG		;cuenta negativamente
