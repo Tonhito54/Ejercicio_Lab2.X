@@ -1,3 +1,4 @@
+;DA LA VISIBILIDAD DE CADA VENTANA EN SU RESPECTIVO DISPLAY
 VISUALIZAR:
     CLRF    PORTC			;limpieza del puerto C
     BSF	    STATUS,C			;seteado del Carry
