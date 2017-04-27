@@ -55,11 +55,10 @@ CONT_NEGATIVO:
     MOVLW   .60
     XORWF   INI_SEGUNDOS,0
     BTFSS   STATUS,Z		    ;si alcanzan un valor de 60 segundos
-	GOTO	$+5
+	GOTO	$+4
     INCF    INI_MINUTOS,1	    ;incrementan los minutos y se resetean los segundos y continua incrementando
     MOVLW   .0
     MOVWF   INI_SEGUNDOS
-    INCF    INI_MINUTOS,1
     CALL    DISPLAYS		    ;asignacion de los demas displays
 RETURN    
 
