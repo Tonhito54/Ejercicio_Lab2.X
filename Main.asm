@@ -125,7 +125,7 @@ T3m20s:
     GOTO    NEGATIVO			;temporizacion negativa
 T4m10s:
     MOVLW   0X04
-    MOVWF   INI_MINUTOSs		;minutos=4
+    MOVWF   INI_MINUTOS			;minutos=4
     MOVLW   0X0A
     MOVWF   INI_SEGUNDOS		;segundos=10		
     MOVLW   .147
