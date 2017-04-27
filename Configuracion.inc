@@ -1,0 +1,22 @@
+CONFIGURACION:
+    BANKSEL OSCCON
+    MOVLW   0XF1
+    MOVWF   OSCCON
+    
+    ;TRISA y TRISC Salidas; TRISE y TRISD[0] Entradas 
+    BANKSEL TRISA
+    CLRF    TRISA
+    CLRF    TRISC
+    MOVLW   0XFF
+    MOVWF   TRISE
+    BSF	    TRISD,0
+    BANKSEL ANSEL
+    CLRF    ANSEL
+    
+    BANKSEL PORTA
+    CLRF    PORTA
+    CLRF    PORTC
+    
+RETURN 
+
+

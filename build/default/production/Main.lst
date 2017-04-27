@@ -1,0 +1,1401 @@
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001     list p=16F887
+                      00002     
+                      00003 #include "p16f887.inc"
+                      00001         LIST
+                      00002 
+                      00003 ;==========================================================================
+                      00004 ; Build date : Jan 30 2017
+                      00005 ;  MPASM PIC16F887 processor include
+                      00006 ; 
+                      00007 ;  (c) Copyright 1999-2017 Microchip Technology, All rights reserved
+                      00008 ;==========================================================================
+                      00009 
+                      00810         LIST
+                      00004     
+                      00005 ; CONFIG1
+                      00006 ; __config 0xE3F4
+2007   23F4           00007  __CONFIG _CONFIG1, _FOSC_INTRC_NOCLKOUT & _WDTE_OFF & _PWRTE_OFF & _MCLRE_ON & _CP_OFF & _CPD_OFF & _BO
+                            REN_ON & _IESO_OFF & _FCMEN_OFF & _LVP_OFF
+                      00008 ; CONFIG2
+                      00009 ; __config 0xFEFF
+2008   3EFF           00010  __CONFIG _CONFIG2, _BOR4V_BOR21V & _WRT_OFF
+                      00011  
+Warning[205]: Found directive in column 1. (CBLOCK)
+                      00012 CBLOCK 0X20
+  00000020            00013     VENTANA : 6                         ;6 ventanas- 6 displays 
+  00000026            00014     SELECT                              ;Seleccionador de temporizador por dipswitch
+  00000027            00015     INI_SEGUNDOS                        ;valor de segundos 
+  00000028            00016     INI_MINUTOS                         ;valor de minutos
+  00000029            00017     I                                   ;contador de visualizacion por cada una de las ventanas
+  0000002A            00018     J                                   ;contador de visualizacion por el numero total de las ventanas (
+                            1 segundo)
+  0000002B            00019     K                                   ;posicion inicial en la respectiva tabla de mensaje de reset
+  0000002C            00020     L                                   ;posicion en la tabla del mensaje espera
+  0000002D            00021     U                                   ;contador para desplazamineto de un caracter
+Warning[205]: Found directive in column 1. (ENDC)
+                      00022 ENDC 
+                      00023     
+                      00024     ORG .0                              ;llamado de las subrutinas de configuracion e inicializacion y l
+                            impieza de las variables
+0000   2???           00025     CALL    CONFIGURACION
+0001   2???           00026     CALL    INI_REG
+0002   01A7           00027     CLRF    INI_SEGUNDOS
+0003   01A8           00028     CLRF    INI_MINUTOS
+0004   01A6           00029     CLRF    SELECT
+0005   01A9           00030     CLRF    I
+0006   01AA           00031     CLRF    J
+0007   01AB           00032     CLRF    K
+0008   01AC           00033     CLRF    L
+0009   01B7           00034     CLRF    M
+000A   01AD           00035     CLRF    U
+                      00036     
+000B                  00037 MAIN:                                   ;inicio del programa (estado espera)
+000B   1C08           00038     BTFSS   PORTD,0                     ;testeo del bit 0 del puerto D
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+000C   2???           00039         GOTO    MENSAJE                 ;llamado de tabla con mensaje ESPERA
+000D   2???           00040     CALL    RETARDO_B                   ;retardo de 25ms
+000E   1C08           00041     BTFSS   PORTD,0                     ;retesteo del puerto
+000F   2???           00042         GOTO    MENSAJE                 ;llamado de tabla con mensaje ESPERA
+0010   2???           00043         GOTO    OPCIONES                ;menu de opciones (0, 50s; 1, 1m40s; 2, 2m30s; 3, 3m20s; 4, 4m10
+                            s)
+                      00044     ;MENSAJE DE ESPERA
+Warning[207]: Found label after column 1. (MENSAJE)
+0011                  00045     MENSAJE:
+0011   ???? ????      00046     PAGESEL MENSAJE_ESPERA              ;paginado (PAGE 4)
+0013   2???           00047     CALL    MENSAJE_ESPERA              ;mensaje ESPERA
+0014   ???? ????      00048     PAGESEL MAIN                        ;paginado (PAGE 1)
+0016   2???           00049         GOTO    MAIN                    ;permanece en ESPERA
+                      00050 
+0017                  00051 OPCIONES:    
+0017   0809           00052     MOVF    PORTE,0                     ;PORTE entrada por dipswitch
+0018   00A6           00053     MOVWF   SELECT                      ;asignacion al selecccionador del temporizador 
+                      00054     
+0019   3000           00055     MOVLW   0X00                        ;opcion 0
+001A   0626           00056     XORWF   SELECT,0                    ;comparacion con seleccionador
+001B   1903           00057     BTFSC   STATUS,Z
+001C   2???           00058         GOTO    T50s                    ;temporizador de 50s
+                      00059 
+001D   3001           00060     MOVLW   0X01                        ;opcion 1
+001E   0626           00061     XORWF   SELECT,0                    ;comparacion con seleccionador
+001F   1903           00062     BTFSC   STATUS,Z
+0020   2???           00063         GOTO    T1m40s                  ;temporizador de 1m40s
+                      00064         
+0021   3002           00065     MOVLW   0X02                        ;opcion 2
+0022   0626           00066     XORWF   SELECT,0                    ;comparacion con seleccionador
+0023   1903           00067     BTFSC   STATUS,Z
+0024   2???           00068         GOTO    T2m30s                  ;temporizador de 2m30s
+                      00069         
+0025   3003           00070     MOVLW   0X03                        ;opcion 3
+0026   0626           00071     XORWF   SELECT,0                    ;comparacion con seleccionador
+0027   1903           00072     BTFSC   STATUS,Z
+0028   2???           00073         GOTO    T3m20s                  ;temporizador de 3m20s
+                      00074         
+0029   3004           00075     MOVLW   0X04                        ;opcion 4
+002A   0626           00076     XORWF   SELECT,0                    ;comparacion con seleccionador
+002B   1903           00077     BTFSC   STATUS,Z
+002C   2???           00078         GOTO    T4m10s                  ;temporizador de 4m10s
+                      00079         
+                      00080     ;en los valores nos definidos realiza la temporizacion de 50s por defecto
+                      00081         
+002D                  00082 T50s:
+002D   3000           00083     MOVLW   0X00
+002E   00A8           00084     MOVWF   INI_MINUTOS                 ;minutos=0
+002F   3032           00085     MOVLW   0X32
+0030   00A7           00086     MOVWF   INI_SEGUNDOS                ;segundos=50
+0031   3000           00087     MOVLW   .0
+0032   00AB           00088     MOVWF   K                           ;posicion inicial de tabla de mensaje reset (MENSAJE0) en 0
+0033   3026           00089     MOVLW   .38
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0034   00B7           00090     MOVWF   M                           ;posicion final de tabla de mensaje reset (MENSAJE0) en 38
+0035   2???           00091     CALL    TEMPORIZAR                  ;subrutina de temporizacion positiva
+0036   2???           00092     GOTO    NEGATIVO                    ;temporizacion negativa
+0037                  00093 T1m40s:
+0037   3001           00094     MOVLW   0X01
+0038   00A8           00095     MOVWF   INI_MINUTOS                 ;minutos=1
+0039   3028           00096     MOVLW   0X28
+003A   00A7           00097     MOVWF   INI_SEGUNDOS                ;segundos=40
+003B   3026           00098     MOVLW   .38
+003C   00AB           00099     MOVWF   K                           ;posicion inicial de tabla de mensaje reset (MENSAJE0) en 38
+003D   3048           00100     MOVLW   .72
+003E   00B7           00101     MOVWF   M                           ;posicion final de tabla de mensaje reset (MENSAJE0) en 72
+003F   2???           00102     CALL    TEMPORIZAR                  ;subrutina de temporizacion positiva
+0040   2???           00103     GOTO    NEGATIVO                    ;temporizacion negativa
+0041                  00104 T2m30s:
+0041   3002           00105     MOVLW   0X02
+0042   00A8           00106     MOVWF   INI_MINUTOS                 ;minutos=2
+0043   301E           00107     MOVLW   0X1E
+0044   00A7           00108     MOVWF   INI_SEGUNDOS                ;segundos=30
+0045   3048           00109     MOVLW   .72
+0046   00AB           00110     MOVWF   K                           ;posicion inicial de tabla de mensaje reset (MENSAJE0) en 72
+0047   3072           00111     MOVLW   .114
+0048   00B7           00112     MOVWF   M                           ;posicion final de tabla de mensaje reset (MENSAJE0) en 114     
+                                                
+0049   2???           00113     CALL    TEMPORIZAR                  ;subrutina de temporizacion positiva
+004A   2???           00114     GOTO    NEGATIVO                    ;temporizacion negativa
+004B                  00115 T3m20s:
+004B   3003           00116     MOVLW   0X03
+004C   00A8           00117     MOVWF   INI_MINUTOS                 ;minutos=3
+004D   3014           00118     MOVLW   0X14
+004E   00A7           00119     MOVWF   INI_SEGUNDOS                ;segundos=20
+004F   3072           00120     MOVLW   .114
+0050   00AB           00121     MOVWF   K                           ;posicion inicial de tabla de mensaje reset (MENSAJE0) en 114
+0051   3093           00122     MOVLW   .147
+0052   00B7           00123     MOVWF   M                           ;posicion final de tabla de mensaje reset (MENSAJE0) en 147
+0053   2???           00124     CALL    TEMPORIZAR                  ;subrutina de temporizacion positiva
+0054   2???           00125     GOTO    NEGATIVO                    ;temporizacion negativa
+0055                  00126 T4m10s:
+0055   3004           00127     MOVLW   0X04
+Error[113]  : Symbol not previously defined (INI_MINUTOSs)
+0056   0080           00128     MOVWF   INI_MINUTOSs                ;minutos=4
+0057   300A           00129     MOVLW   0X0A
+0058   00A7           00130     MOVWF   INI_SEGUNDOS                ;segundos=10            
+0059   3093           00131     MOVLW   .147
+005A   00AB           00132     MOVWF   K                           ;posicion inicial de tabla de mensaje reset (MENSAJE0) en 147
+005B   30BC           00133     MOVLW   .188
+005C   00B7           00134     MOVWF   M                           ;posicion final de tabla de mensaje reset (MENSAJE0) en 188
+005D   2???           00135     CALL    TEMPORIZAR                  ;subrutina de temporizacion positiva
+005E   2???           00136     GOTO    NEGATIVO                    ;temporizacion negativa
+                      00137     
+                      00138 #include "Conversor.inc"
+                      00001 
+Warning[205]: Found directive in column 1. (CBLOCK)
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00002 CBLOCK
+  0000002E            00003     R_MIN                               ;valor auxiliar de minutos
+  0000002F            00004     DEC_MINUTOS                         ;decenas de minutos
+  00000030            00005     UNI_MINUTOS                         ;unidades de minutos
+  00000031            00006     R_SEG                               ;valor auxiliar de segundos
+  00000032            00007     DEC_SEGUNDOS                        ;decenas de segundos
+  00000033            00008     UNI_SEGUNDOS                        ;unidades de segundos
+Warning[205]: Found directive in column 1. (ENDC)
+                      00009 ENDC
+                      00010   
+005F                  00011 CONVERSOR_M:                            ;conversor de minutos
+005F   01AF           00012     CLRF    DEC_MINUTOS                 ;limpieza de decenas de minutos
+0060   01B0           00013     CLRF    UNI_MINUTOS                 ;limpieza de unidades de minutos
+0061   00AE           00014     MOVWF   R_MIN                       ;asignacion del correspondiente valor de minutos para el tempori
+                            zador elegido
+0062                  00015 DECENAS_M:  
+0062   300A           00016     MOVLW   .10                             
+0063   02AE           00017     SUBWF   R_MIN,1                     ;resto 10 del valor de los minutos 
+0064   1C03           00018     BTFSS   STATUS,C                    ;testeo del carry (resultado positivo o negativo?)
+0065   2???           00019         GOTO    UNIDADES_M              ;resultado negativo envia a hallar unidades de minutos  
+Message[305]: Using default destination of 1 (file).
+0066   0AAF           00020     INCF    DEC_MINUTOS                 ;resultado positivo incrementa el valor de decenas de minutos 
+0067   2???           00021         GOTO    DECENAS_M               ;se resta 10 hasta donde sea posible
+                      00022     
+0068                  00023 UNIDADES_M:
+0068   300A           00024     MOVLW   .10
+0069   072E           00025     ADDWF   R_MIN,0                     ;se suma 10 al valor de los minutos para volver a un valor posit
+                            ivo 
+006A   00B0           00026     MOVWF   UNI_MINUTOS                 ;se asigna el resultado a unidades de minutos 
+                      00027     
+Warning[203]: Found opcode in column 1. (RETURN)
+006B   0008           00028 RETURN
+                      00029     
+006C                  00030 CONVERSOR_S:                            ;conversor de segundos
+006C   01B2           00031     CLRF    DEC_SEGUNDOS                ;limpieza de decenas de segundos
+006D   01B3           00032     CLRF    UNI_SEGUNDOS                ;limpieza de unidades de segundos
+006E   00B1           00033     MOVWF   R_SEG                       ;asignacion del correspondiente valor de segundos para el tempor
+                            izador elegido
+006F                  00034 DECENAS_S:  
+006F   300A           00035     MOVLW   .10
+0070   02B1           00036     SUBWF   R_SEG,1                     ;resto 10 del valor de los segundos
+0071   1C03           00037     BTFSS   STATUS,C                    ;testeo del carry (resultado positivo o negativo?)
+0072   2???           00038         GOTO    UNIDADES_S              ;resultado negativo envia a hallar unidades de segundos 
+Message[305]: Using default destination of 1 (file).
+0073   0AB2           00039     INCF    DEC_SEGUNDOS                ;resultado positivo incrementa el valor de decenas de segundos  
+0074   2???           00040         GOTO    DECENAS_S               ;se resta 10 hasta donde sea posible
+                      00041     
+0075                  00042 UNIDADES_S:
+0075   300A           00043     MOVLW   .10
+0076   0731           00044     ADDWF   R_SEG,0                     ;se suma 10 al valor de los segundos para volver a un valor posi
+                            tivo 
+0077   00B3           00045     MOVWF   UNI_SEGUNDOS                ;se asigna el resultado a unidades de segundos 
+                      00046     
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+Warning[203]: Found opcode in column 1. (RETURN)
+0078   0008           00047 RETURN    
+                      00139 #include "Temporizar.inc"   
+0079                  00001 TEMPORIZAR:
+                      00002     ;VENTANA 0 DISPLAY 6
+                      00003     ;se asigna un valor de 0 al display 6
+0079   3020           00004     MOVLW   VENTANA
+007A   0084           00005     MOVWF   FSR
+007B   3000           00006     MOVLW   0X00
+007C   2???           00007     CALL    TABLA
+007D   0080           00008     MOVWF   INDF
+                      00009     
+007E   2???           00010     CALL    DISPLAYS                    ;llamado a la asignacion de los demas displays
+                      00011     
+007F                  00012 DECREMENTO:    
+                      00013     ;DECREMENTO DE SEGUNDOS SI ES DIFERENTE DE CERO
+007F   3000           00014     MOVLW   .0
+0080   0627           00015     XORWF   INI_SEGUNDOS,0
+0081   1903           00016     BTFSC   STATUS,Z
+0082   2???           00017         GOTO    $+3
+0083   03A7           00018     DECF    INI_SEGUNDOS,1
+0084   2???           00019         GOTO    TEMPORIZAR
+                      00020     ;EVALUA SI CONTINUA O NO EL TEMPORIZADOR 
+0085   3000           00021     MOVLW   .0
+0086   0628           00022     XORWF   INI_MINUTOS,0
+0087   1903           00023     BTFSC   STATUS,Z
+0088   2???           00024         GOTO    $+5
+                      00025     ;DECREMENTO MINUTOS Y REINICIO SEGUNDOS
+0089   03A8           00026     DECF    INI_MINUTOS,1
+008A   303B           00027     MOVLW   .59
+008B   00A7           00028     MOVWF   INI_SEGUNDOS
+008C   2???           00029         GOTO    TEMPORIZAR
+                      00030         
+008D                  00031 NEGATIVO:                               ;CONTEOS NEGATIVOS
+008D   1C88           00032     BTFSS   PORTD,1                     ;testeo del bit 1 del puerto D
+008E   2???           00033         GOTO    CONT_NEG                ;cuenta negativamente
+008F   2???           00034     CALL    RETARDO_B                   ;retardo de 25ms
+0090   1C88           00035     BTFSS   PORTD,1                     ;retesteo del bit 1 del puerto D
+0091   2???           00036         GOTO    CONT_NEG                ;cuenta negativamente
+0092   2???           00037     CALL    INI_REG                     ;inicializacion de registros
+0093   2???           00038     CALL    DESPLAZAR                   ;desplazamiento de mensajes de Reset
+0094   2???           00039     GOTO    MAIN                        ;regreso a estado ESPERA
+Warning[207]: Found label after column 1. (CONT_NEG)
+0095                  00040     CONT_NEG:
+0095   2???           00041     CALL    CONT_NEGATIVO               ;conteos negativos
+0096   2???           00042         GOTO    NEGATIVO                ;retesteo del reset 
+                      00043 
+0097                  00044 CONT_NEGATIVO:  
+                      00045     ;VENTANA 0 DISPLAY 6
+                      00046     ;se le asigna un (-) al display 6
+0097   3020           00047     MOVLW   VENTANA
+0098   0084           00048     MOVWF   FSR
+0099   300A           00049     MOVLW   0X0A
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+009A   2???           00050     CALL    TABLA
+009B   0080           00051     MOVWF   INDF
+Message[305]: Using default destination of 1 (file).
+009C   0AA7           00052     INCF    INI_SEGUNDOS
+                      00053     
+                      00054     ;INCREMENTO DE LOS SEGUNDOS 
+009D   303C           00055     MOVLW   .60
+009E   0627           00056     XORWF   INI_SEGUNDOS,0
+009F   1D03           00057     BTFSS   STATUS,Z                ;si alcanzan un valor de 60 segundos
+00A0   2???           00058         GOTO    $+5
+00A1   0AA8           00059     INCF    INI_MINUTOS,1           ;incrementan los minutos y se resetean los segundos y continua incre
+                            mentando
+00A2   3000           00060     MOVLW   .0
+00A3   00A7           00061     MOVWF   INI_SEGUNDOS
+00A4   0AA8           00062     INCF    INI_MINUTOS,1
+00A5   2???           00063     CALL    DISPLAYS                ;asignacion de los demas displays
+Warning[203]: Found opcode in column 1. (RETURN)
+00A6   0008           00064 RETURN    
+                      00065 
+                      00066         
+                      00140 #include "Configuracion.inc"          
+00A7                  00001 CONFIGURACION:
+00A7   1683 1303      00002     BANKSEL OSCCON
+00A9   30F1           00003     MOVLW   0XF1
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00AA   008F           00004     MOVWF   OSCCON
+                      00005     
+                      00006     ;TRISA y TRISC Salidas; TRISE y TRISD[0] Entradas 
+00AB   1683 1303      00007     BANKSEL TRISA
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00AD   0185           00008     CLRF    TRISA
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00AE   0187           00009     CLRF    TRISC
+00AF   30FF           00010     MOVLW   0XFF
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00B0   0089           00011     MOVWF   TRISE
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00B1   1408           00012     BSF     TRISD,0
+00B2   1683 1703      00013     BANKSEL ANSEL
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00B4   0188           00014     CLRF    ANSEL
+                      00015     
+00B5   1283 1303      00016     BANKSEL PORTA
+00B7   0185           00017     CLRF    PORTA
+00B8   0187           00018     CLRF    PORTC
+                      00019     
+Warning[203]: Found opcode in column 1. (RETURN)
+00B9   0008           00020 RETURN 
+                      00021 
+                      00022 
+                      00141 #include "Visualizar.inc"
+00BA                  00001 VISUALIZAR:
+00BA   0187           00002     CLRF    PORTC                       ;limpieza del puerto C
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE  7
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00BB   1403           00003     BSF     STATUS,C                    ;seteado del Carry
+00BC   3020           00004     MOVLW   VENTANA                     ;direccion 0X20
+00BD   0084           00005     MOVWF   FSR                         
+00BE   0800           00006     MOVF    INDF,0                      ;extraccion del dato en esa direccion
+00BF   0085           00007     MOVWF   PORTA                       ;envio del dato al puerto A
+00C0   0D87           00008     RLF     PORTC,1                     ;rotacion del Carry por el puerto C                     
+00C1   2???           00009     CALL    RETARDO                     ;retardo de 2,5ms
+00C2   0A84           00010     INCF    FSR,1                       ;incremento del apuntador
+00C3   0AA9           00011     INCF    I,1                         ;incremento de la variable contadora de cada una de las ventanas
+                             
+00C4   3006           00012     MOVLW   0X06                        
+00C5   0629           00013     XORWF   I,0     
+00C6   1D03           00014     BTFSS   STATUS,Z                    ;testeo I=6
+00C7   2???           00015         GOTO    $-9                     ;vuelta a extraer el dato en la siguiente posicion 
+00C8   01A9           00016     CLRF    I                           ;reseteo del contador I
+00C9   0AAA           00017     INCF    J,1                         ;incremento de la variable contadora del numero de veces de visu
+                            zalizacion por el total de ventanas 
+00CA   3044           00018     MOVLW   .68                         ;2.5ms*68*6= 1s 
+00CB   062A           00019     XORWF   J,0                         
+00CC   1D03           00020     BTFSS   STATUS,Z                    ;testeado de culminacion del segundo
+00CD   2???           00021         GOTO    VISUALIZAR              ;vuelta a visualizar
+00CE   01AA           00022     CLRF    J                           ;reseteo del contador J
+Warning[203]: Found opcode in column 1. (RETURN)
+00CF   0008           00023 RETURN
+                      00142 #include "Displays.inc"    
+                      00001 
+00D0                  00002 DISPLAYS:  
+                      00003     ;VENTANA 1 DISPLAY 5
+                      00004     ;se le asigna al display 5 un valor fijo de 0
+00D0   0A84           00005     INCF    FSR,1
+00D1   3000           00006     MOVLW   0X00
+00D2   2???           00007     CALL    TABLA
+00D3   0080           00008     MOVWF   INDF
+                      00009     
+                      00010     ;VENTANA 3 DISPLAY 3
+                      00011     ;se le asigna al display 3 el valor de las unidades de minutos
+00D4   3020           00012     MOVLW   VENTANA
+00D5   0084           00013     MOVWF   FSR
+00D6   3003           00014     MOVLW   .3
+00D7   0784           00015     ADDWF   FSR,1
+00D8   0828           00016     MOVF    INI_MINUTOS,0
+00D9   2???           00017     CALL    CONVERSOR_M
+00DA   0830           00018     MOVF    UNI_MINUTOS,0
+00DB   2???           00019     CALL    TABLA
+00DC   0080           00020     MOVWF   INDF
+                      00021     
+                      00022     ;VENTANA 2 DISPLAY 4
+                      00023     ;se le asigna al display 4 el valor de las decenas de minutos
+00DD   0384           00024     DECF    FSR,1
+00DE   082F           00025     MOVF    DEC_MINUTOS,0
+00DF   2???           00026     CALL    TABLA
+00E0   0080           00027     MOVWF   INDF
+                      00028     
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE  8
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00029     ;VENTANA 5 DISPLAY 1
+                      00030     ;se le asigna al display 1 el valor de las unidades de segundos
+00E1   3020           00031     MOVLW   VENTANA
+00E2   0084           00032     MOVWF   FSR
+00E3   3005           00033     MOVLW   .5
+00E4   0784           00034     ADDWF   FSR,1
+00E5   0827           00035     MOVF    INI_SEGUNDOS,0
+00E6   2???           00036     CALL    CONVERSOR_S
+00E7   0833           00037     MOVF    UNI_SEGUNDOS,0
+00E8   2???           00038     CALL    TABLA
+00E9   0080           00039     MOVWF   INDF
+                      00040     
+                      00041     ;VENTANA 4 DISPLAY 2
+                      00042     ;se le asigna al display 2 el valor de las decenas de segundos
+Message[305]: Using default destination of 1 (file).
+00EA   0384           00043     DECF    FSR
+00EB   0832           00044     MOVF    DEC_SEGUNDOS,0
+00EC   2???           00045     CALL    TABLA
+00ED   0080           00046     MOVWF   INDF
+                      00047     
+00EE   2???           00048     CALL    VISUALIZAR          ;llamado a visualizar
+                      00049 
+Warning[203]: Found opcode in column 1. (RETURN)
+00EF   0008           00050 RETURN    
+                      00051 
+                      00143 #include "Inicializar_Registros.inc"
+00F0                  00001 INI_REG:                            ;inicializacion de los 6 registros de las ventadas por direccionamie
+                            nto indirecto
+00F0   3020           00002     MOVLW   VENTANA
+00F1   0084           00003     MOVWF   FSR
+00F2   0180           00004     CLRF    INDF
+Message[305]: Using default destination of 1 (file).
+00F3   0A84           00005     INCF    FSR
+00F4   3026           00006     MOVLW   0X26
+00F5   0604           00007     XORWF   FSR,0
+00F6   1D03           00008     BTFSS   STATUS,Z
+00F7   2???           00009         GOTO    $-5
+Warning[203]: Found opcode in column 1. (RETURN)
+00F8   0008           00010 RETURN
+                      00011 
+                      00012 
+                      00144 #include "Retardo.inc"  
+Warning[205]: Found directive in column 1. (CBLOCK)
+                      00001 CBLOCK  
+  00000034            00002     CONTADOR1
+  00000035            00003     CONTADOR2
+  00000036            00004     CONTADOR3
+Warning[205]: Found directive in column 1. (ENDC)
+                      00005 ENDC
+                      00006 
+                      00007 ;Retardo de 2,5ms
+00F9                  00008 RETARDO:
+00F9   300F           00009     MOVLW   .15 
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE  9
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00FA   00B4           00010     MOVWF   CONTADOR1
+00FB   306C           00011     MOVLW   .108
+00FC   00B5           00012     MOVWF   CONTADOR2
+Message[305]: Using default destination of 1 (file).
+00FD   0BB5           00013     DECFSZ  CONTADOR2
+00FE   2???           00014         GOTO    $-1
+Message[305]: Using default destination of 1 (file).
+00FF   0BB4           00015     DECFSZ  CONTADOR1
+0100   2???           00016         GOTO    $-5
+Warning[203]: Found opcode in column 1. (RETURN)
+0101   0008           00017 RETURN
+                      00018 
+                      00019 ;25 ms  
+0102                  00020 RETARDO_B:
+0102   3010           00021     MOVLW   .16 
+0103   00B4           00022     MOVWF   CONTADOR1
+0104   3009           00023     MOVLW   .9
+0105   00B5           00024     MOVWF   CONTADOR2
+0106   3072           00025     MOVLW   .114
+0107   00B6           00026     MOVWF   CONTADOR3
+Message[305]: Using default destination of 1 (file).
+0108   0BB6           00027     DECFSZ  CONTADOR3
+0109   2???           00028         GOTO    $-1
+Message[305]: Using default destination of 1 (file).
+010A   0BB5           00029     DECFSZ  CONTADOR2
+010B   2???           00030         GOTO    $-5
+Message[305]: Using default destination of 1 (file).
+010C   0BB4           00031     DECFSZ  CONTADOR1
+010D   2???           00032         GOTO    $-9     
+Warning[203]: Found opcode in column 1. (RETURN)
+010E   0008           00033 RETURN
+                      00145 #include "Desplazar.inc"  
+Warning[205]: Found directive in column 1. (CBLOCK)
+                      00001 CBLOCK
+  00000037            00002     M                               ;valor final de tabla de mensaje de reset (MENSAJE0)
+Warning[205]: Found directive in column 1. (ENDC)
+                      00003 ENDC    
+                      00004 
+010F                  00005 DESPLAZAR:
+010F   2???           00006     CALL    DESPLAZA_CARACTER       ;desplazamiento de caracter
+0110   082B           00007     MOVF    K,0                     ;posicion inicial en la tabla
+0111   ???? ????      00008     PAGESEL MENSAJE0                ;paginado (PAGE 4)
+0113   2???           00009     CALL    MENSAJE0                ;tabla de mesajes de reset
+0114   ???? ????      00010     PAGESEL DESPLAZAR               ;paginado (PAGE 1)
+0116   0080           00011     MOVWF   INDF                    ;extraccion del dato en dicha posicion
+0117   0837           00012     MOVF    M,0                     ;posicion final de la tabla del mensaje
+0118   062B           00013     XORWF   K,0
+0119   1903           00014     BTFSC   STATUS,Z                ;testeo de culminacion del mensaje
+011A   2???           00015         GOTO    $+4                 
+011B   0AAB           00016     INCF    K,1                     ;incremento de la posicion de la tabla
+011C   2???           00017     CALL    VISUALIZAR              ;visualizacion del caracter
+011D   2???           00018         GOTO    DESPLAZAR           ;desplazamiento del caracter
+011E   01AB           00019     CLRF    K                       ;limpieza del contador K
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 10
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+Warning[203]: Found opcode in column 1. (RETURN)
+011F   0008           00020 RETURN
+                      00021 
+0120                  00022 DESPLAZA_CARACTER:
+0120   3020           00023     MOVLW   VENTANA                 ;direccion 0X20
+0121   0084           00024     MOVWF   FSR                     ;asignacion al apuntador
+Message[305]: Using default destination of 1 (file).
+0122   0A84           00025     INCF    FSR                     ;incremento del apuntador
+0123   0800           00026     MOVF    INDF,0                  ;extraccion del respectivo dato
+Message[305]: Using default destination of 1 (file).
+0124   0384           00027     DECF    FSR                     ;decremento del apuntador
+0125   0080           00028     MOVWF   INDF                    ;asignacion del respectivo dato
+Message[305]: Using default destination of 1 (file).
+0126   0A84           00029     INCF    FSR                     ;incremento del apuntador 
+Message[305]: Using default destination of 1 (file).
+0127   0AAD           00030     INCF    U                       ;incremento del contador U
+0128   3005           00031     MOVLW   0X05                    
+0129   062D           00032     XORWF   U,0                     
+012A   1D03           00033     BTFSS   STATUS,Z                ;testeo U=5
+012B   2???           00034         GOTO    DESPLAZA_CARACTER+2 
+012C   01AD           00035     CLRF    U                       ;limpieza del contador U
+Warning[203]: Found opcode in column 1. (RETURN)
+012D   0008           00036 RETURN    
+                      00146 #include "Tabla_Dec.inc" 
+Warning[205]: Found directive in column 1. (CBLOCK)
+                      00001 CBLOCK
+  00000038            00002     AUX_REG1                ;registro auxiliar para asignacion de valores del posiciones en la tabla
+Warning[205]: Found directive in column 1. (ENDC)
+                      00003 ENDC
+                      00004     
+Warning[205]: Found directive in column 1. (ORG)
+                      00005 ORG     0X7D0               ;direccion de inicio para la tabla
+                      00006     
+07D0                  00007 TABLA:
+07D0   00B8           00008     MOVWF   AUX_REG1        ;aseguramiento del dato de posicion de la tabla
+07D1   3007           00009     MOVLW   0X07        
+07D2   008A           00010     MOVWF   PCLATH          ;asignacion de 7 al PCLATH
+07D3   0838           00011     MOVF    AUX_REG1,0      ;retoma el valor de la posicion en la tabla
+07D4   0782           00012     ADDWF   PCL,F
+                      00013     ;DIGITOS EN DECIMAL
+07D5   343F 3406 345B 00014     DT  0X3F, 0X06, 0X5B, 0X4F, 0X66, 0X6D, 0X7D, 0X07, 0XFF, 0X6F, 0X40
+       344F 3466 346D 
+       347D 3407 34FF 
+       346F 3440 
+                      00015     ;MENSAJE ESPERA
+07E0   3479 346D 3473 00016     DT  0X79, 0X6D, 0X73, 0X79, 0X50, 0X77
+       3479 3450 3477 
+                      00017 
+                      00147 #include "Mensajes.inc"   
+Warning[205]: Found directive in column 1. (CBLOCK)
+                      00001 CBLOCK
+  00000039            00002     AUX_REG                         ;registro auxiliar para salvaguardar el dato de posicion de la tabla
+Warning[205]: Found directive in column 1. (ENDC)
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 11
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00003 ENDC
+                      00004     
+Warning[205]: Found directive in column 1. (ORG)
+                      00005 ORG 0X1800                          ;direccion de PAGINA 4
+                      00006 
+1800                  00007 MENSAJE_ESPERA: 
+1800   3020           00008     MOVLW   VENTANA                 ;direccion 0X20
+1801   0084           00009     MOVWF   FSR                     ;asignacion del apuntador
+1802   300B           00010     MOVLW   .11                     
+1803   00AC           00011     MOVWF   L                       ;inicio en la posicion 11 de la tabla
+1804   082C           00012     MOVF    L,0
+1805   ???? ????      00013     PAGESEL TABLA                   ;paginado (PAGE 1)
+1807   2???           00014     CALL    TABLA                   ;tabla de mensaje ESPERA
+1808   0080           00015     MOVWF   INDF                    ;extraccion del dato en la posicion
+1809   ???? ????      00016     PAGESEL MENSAJE_ESPERA          ;paginado (PAGE 4)
+180B   3010           00017     MOVLW   .16                     
+180C   062C           00018     XORWF   L,0                     
+180D   1903           00019     BTFSC   STATUS,Z                ;testeado L=16    (caracter final del mensaje ESPERA)
+180E   2???           00020         GOTO    $+4
+180F   0A84           00021     INCF    FSR,1                   ;incremento del apuntador
+1810   0AAC           00022     INCF    L,1                     ;incremento del contador L
+1811   2???           00023         GOTO    MENSAJE_ESPERA+4    ;asignacion del nuevo dato
+1812   ???? ????      00024     PAGESEL VISUALIZAR              ;paginado (PAGE 1)
+1814   2???           00025     CALL    VISUALIZAR              ;visualizar mensaje
+Warning[203]: Found opcode in column 1. (RETURN)
+1815   0008           00026 RETURN              
+                      00027     
+Warning[205]: Found directive in column 1. (ORG)
+                      00028 ORG 0X1900      
+1900                  00029 MENSAJE0:
+1900   00B9           00030     MOVWF   AUX_REG                 ;guardado de posicion de la tabla
+1901   3019           00031     MOVLW   0X19                    
+1902   008A           00032     MOVWF   PCLATH                  ;asignacion del valor del PCLATCH
+1903   0839           00033     MOVF    AUX_REG,0               ;recuperacion del valor de la posicion de la tabla
+1904   0782           00034     ADDWF   PCL,1           
+                      00035     
+                      00036 ;------------------------------------------------------------------
+                      00037 ;El principito_Antoine de Saint-Exupery
+1905   3479 3430 3408 00038     DT  0X79, 0X30, 0X08, 0X73, 0X50, 0X04, 0X54, 0X58, 0X04, 0X73
+       3473 3450 3404 
+       3454 3458 3404 
+       3473 
+190F   3404 3446 345C 00039     DT  0X04, 0X46, 0X5C, 0X08, 0X77, 0X54, 0X46, 0X5C, 0X04, 0X54
+       3408 3477 3454 
+       3446 345C 3404 
+       3454 
+1919   3479 3408 345E 00040     DT  0X79, 0X08, 0X5E, 0X79, 0X08, 0X6D, 0X77, 0X04, 0X54, 0X46
+       3479 3408 346D 
+       3477 3404 3454 
+       3446 
+1923   3440 3479 3476 00041     DT  0X40, 0X79, 0X76, 0X1C, 0X73, 0X79, 0X50, 0X6E 
+       341C 3473 3479 
+       3450 346E 
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 12
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00042 ;------------------------------------------------------------------
+                      00043 ;Sherlock Holmes_Arthur Conan Doyle    
+192B   346D 3474 3479 00044     DT  0X6D, 0X74, 0X79, 0X50, 0X30, 0X5C, 0X58, 0X70, 0X08, 0X74
+       3450 3430 345C 
+       3458 3470 3408 
+       3474 
+1935   345C 3430 3437 00045     DT  0X5C, 0X30, 0X37, 0X79, 0X6D, 0X08, 0X77, 0X50, 0X46, 0X74
+       3479 346D 3408 
+       3477 3450 3446 
+       3474 
+193F   341C 3450 3408 00046     DT  0X1C, 0X50, 0X08, 0X58, 0X5C, 0X54, 0X77, 0X54, 0X08, 0X5E
+       3458 345C 3454 
+       3477 3454 3408 
+       345E 
+1949   345C 346E 3430 00047     DT  0X5C, 0X6E, 0X30, 0X79
+       3479 
+                      00048 ;------------------------------------------------------------------
+                      00049 ;Frankenstein moderno prometeo_Mary Shelley    
+194D   3471 3450 3477 00050     DT  0X71, 0X50, 0X77, 0X54, 0X70, 0X79, 0X54, 0X6D, 0X46, 0X79
+       3454 3470 3479 
+       3454 346D 3446 
+       3479 
+1957   3404 3454 3408 00051     DT  0X04, 0X54, 0X08, 0X37, 0X5C, 0X5E, 0X79, 0X50, 0X54, 0X5C
+       3437 345C 345E 
+       3479 3450 3454 
+       345C 
+1961   3408 3473 3450 00052     DT  0X08, 0X73, 0X50, 0X5C, 0X37, 0X79, 0X46, 0X79, 0X5C, 0X08
+       345C 3437 3479 
+       3446 3479 345C 
+       3408 
+196B   3437 3477 3450 00053     DT  0X37, 0X77, 0X50, 0X6E, 0X08, 0X6D, 0X74, 0X79, 0X30, 0X30
+       346E 3408 346D 
+       3474 3479 3430 
+       3430 
+1975   3479 346E      00054     DT  0X79, 0X6E
+                      00055 ;------------------------------------------------------------------
+                      00056 ;Las Cronicas de Narnia_C.S.Lewis
+1977   3430 3477 346D 00057     DT  0X30, 0X77, 0X6D, 0X08, 0X58, 0X50, 0X5C, 0X54, 0X04, 0X58
+       3408 3458 3450 
+       345C 3454 3404 
+       3458 
+1981   3477 346D 3408 00058     DT  0X77, 0X6D, 0X08, 0X5E, 0X79, 0X08, 0X54, 0X77, 0X50, 0X54
+       345E 3479 3408 
+       3454 3477 3450 
+       3454 
+198B   3404 3477 3408 00059     DT  0X04, 0X77, 0X08, 0X58, 0X08, 0X6D, 0X08, 0X30, 0X79, 0X1C
+       3458 3408 346D 
+       3408 3430 3479 
+       341C 
+1995   341C 3404 346D 00060     DT  0X1C, 0X04, 0X6D
+                      00061 ;------------------------------------------------------------------
+                      00062 ;La historia interminable_Michael Ende    
+1998   3430 3477 3408 00063     DT  0X30, 0X77, 0X08, 0X74, 0X04, 0X6D, 0X46, 0X5C, 0X50, 0X04
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 13
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+       3474 3404 346D 
+       3446 345C 3450 
+       3404 
+19A2   3477 3408 3404 00064     DT  0X77, 0X08, 0X04, 0X54, 0X46, 0X79, 0X50, 0X37, 0X04, 0X54
+       3454 3446 3479 
+       3450 3437 3404 
+       3454 
+19AC   3477 347C 3430 00065     DT  0X77, 0X7C, 0X30, 0X79, 0X08, 0X37, 0X04, 0X58, 0X74, 0X77
+       3479 3408 3437 
+       3404 3458 3474 
+       3477 
+19B6   3479 3430 3408 00066     DT  0X79, 0X30, 0X08, 0X79, 0X54, 0X5E, 0X79 
+       3479 3454 345E 
+       3479 
+                      00067 
+                      00068    
+                      00069 
+                      00070 
+                      00071 
+                      00148     
+Warning[205]: Found directive in column 1. (END)
+23F4 3EFF             00149 END  
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 14
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+ABDEN                             00000000
+ABDOVF                            00000007
+ACKDT                             00000005
+ACKEN                             00000004
+ACKSTAT                           00000006
+ADCON0                            0000001F
+ADCON1                            0000009F
+ADCS0                             00000006
+ADCS1                             00000007
+ADDEN                             00000003
+ADFM                              00000007
+ADIE                              00000006
+ADIF                              00000006
+ADON                              00000000
+ADRESH                            0000001E
+ADRESL                            0000009E
+ANS0                              00000000
+ANS1                              00000001
+ANS10                             00000002
+ANS11                             00000003
+ANS12                             00000004
+ANS13                             00000005
+ANS2                              00000002
+ANS3                              00000003
+ANS4                              00000004
+ANS5                              00000005
+ANS6                              00000006
+ANS7                              00000007
+ANS8                              00000000
+ANS9                              00000001
+ANSEL                             00000188
+ANSELH                            00000189
+AUX_REG                           00000039
+AUX_REG1                          00000038
+BAUDCTL                           00000187
+BCLIE                             00000003
+BCLIF                             00000003
+BF                                00000000
+BRG0                              00000000
+BRG1                              00000001
+BRG10                             00000002
+BRG11                             00000003
+BRG12                             00000004
+BRG13                             00000005
+BRG14                             00000006
+BRG15                             00000007
+BRG16                             00000003
+BRG2                              00000002
+BRG3                              00000003
+BRG4                              00000004
+BRG5                              00000005
+BRG6                              00000006
+BRG7                              00000007
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 15
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+BRG8                              00000000
+BRG9                              00000001
+BRGH                              00000002
+C                                 00000000
+C1CH0                             00000000
+C1CH1                             00000001
+C1IE                              00000005
+C1IF                              00000005
+C1OE                              00000005
+C1ON                              00000007
+C1OUT                             00000006
+C1POL                             00000004
+C1R                               00000002
+C1RSEL                            00000005
+C1SEN                             00000005
+C2CH0                             00000000
+C2CH1                             00000001
+C2IE                              00000006
+C2IF                              00000006
+C2OE                              00000005
+C2ON                              00000007
+C2OUT                             00000006
+C2POL                             00000004
+C2R                               00000002
+C2REN                             00000004
+C2RSEL                            00000004
+C2SYNC                            00000000
+CCP1CON                           00000017
+CCP1IE                            00000002
+CCP1IF                            00000002
+CCP1M0                            00000000
+CCP1M1                            00000001
+CCP1M2                            00000002
+CCP1M3                            00000003
+CCP1X                             00000005
+CCP1Y                             00000004
+CCP2CON                           0000001D
+CCP2IE                            00000000
+CCP2IF                            00000000
+CCP2M0                            00000000
+CCP2M1                            00000001
+CCP2M2                            00000002
+CCP2M3                            00000003
+CCP2X                             00000005
+CCP2Y                             00000004
+CCPR1                             00000015
+CCPR1H                            00000016
+CCPR1L                            00000015
+CCPR2                             0000001B
+CCPR2H                            0000001C
+CCPR2L                            0000001B
+CHS0                              00000002
+CHS1                              00000003
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 16
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+CHS2                              00000004
+CHS3                              00000005
+CKE                               00000006
+CKP                               00000004
+CM1CON0                           00000107
+CM2CON0                           00000108
+CM2CON1                           00000109
+CONFIGURACION                     000000A7
+CONTADOR1                         00000034
+CONTADOR2                         00000035
+CONTADOR3                         00000036
+CONT_NEG                          00000095
+CONT_NEGATIVO                     00000097
+CONVERSOR_M                       0000005F
+CONVERSOR_S                       0000006C
+CREN                              00000004
+CSRC                              00000007
+D                                 00000005
+DATA_ADDRESS                      00000005
+DC                                00000001
+DC1B0                             00000004
+DC1B1                             00000005
+DC2B0                             00000004
+DC2B1                             00000005
+DECENAS_M                         00000062
+DECENAS_S                         0000006F
+DECREMENTO                        0000007F
+DEC_MINUTOS                       0000002F
+DEC_SEGUNDOS                      00000032
+DESPLAZAR                         0000010F
+DESPLAZA_CARACTER                 00000120
+DISPLAYS                          000000D0
+D_A                               00000005
+D_NOT_A                           00000005
+ECCPAS                            0000009C
+ECCPAS0                           00000004
+ECCPAS1                           00000005
+ECCPAS2                           00000006
+ECCPASE                           00000007
+EEADR                             0000010D
+EEADRH                            0000010F
+EECON1                            0000018C
+EECON2                            0000018D
+EEDAT                             0000010C
+EEDATA                            0000010C
+EEDATH                            0000010E
+EEIE                              00000004
+EEIF                              00000004
+EEPGD                             00000007
+F                                 00000001
+FERR                              00000002
+FSR                               00000004
+FVREN                             00000000
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 17
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+GCEN                              00000007
+GIE                               00000007
+GO                                00000001
+GO_DONE                           00000001
+GO_NOT_DONE                       00000001
+HTS                               00000002
+I                                 00000029
+I2C_DATA                          00000005
+I2C_READ                          00000002
+I2C_START                         00000003
+I2C_STOP                          00000004
+INDF                              00000000
+INI_MINUTOS                       00000028
+INI_REG                           000000F0
+INI_SEGUNDOS                      00000027
+INTCON                            0000000B
+INTE                              00000004
+INTEDG                            00000006
+INTF                              00000001
+IOCB                              00000096
+IOCB0                             00000000
+IOCB1                             00000001
+IOCB2                             00000002
+IOCB3                             00000003
+IOCB4                             00000004
+IOCB5                             00000005
+IOCB6                             00000006
+IOCB7                             00000007
+IRCF0                             00000004
+IRCF1                             00000005
+IRCF2                             00000006
+IRP                               00000007
+J                                 0000002A
+K                                 0000002B
+L                                 0000002C
+LTS                               00000001
+M                                 00000037
+MAIN                              0000000B
+MC1OUT                            00000007
+MC2OUT                            00000006
+MENSAJE                           00000011
+MENSAJE0                          00001900
+MENSAJE_ESPERA                    00001800
+MSK                               00000093
+MSK0                              00000000
+MSK1                              00000001
+MSK2                              00000002
+MSK3                              00000003
+MSK4                              00000004
+MSK5                              00000005
+MSK6                              00000006
+MSK7                              00000007
+NEGATIVO                          0000008D
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 18
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+NOT_A                             00000005
+NOT_ADDRESS                       00000005
+NOT_BO                            00000000
+NOT_BOR                           00000000
+NOT_DONE                          00000001
+NOT_PD                            00000003
+NOT_POR                           00000001
+NOT_RBPU                          00000007
+NOT_RC8                           00000006
+NOT_T1SYNC                        00000002
+NOT_TO                            00000004
+NOT_TX8                           00000006
+NOT_W                             00000002
+NOT_WRITE                         00000002
+OERR                              00000001
+OPCIONES                          00000017
+OPTION_REG                        00000081
+OSCCON                            0000008F
+OSCTUNE                           00000090
+OSFIE                             00000007
+OSFIF                             00000007
+OSTS                              00000003
+P                                 00000004
+P1M0                              00000006
+P1M1                              00000007
+PCL                               00000002
+PCLATH                            0000000A
+PCON                              0000008E
+PDC0                              00000000
+PDC1                              00000001
+PDC2                              00000002
+PDC3                              00000003
+PDC4                              00000004
+PDC5                              00000005
+PDC6                              00000006
+PEIE                              00000006
+PEN                               00000002
+PIE1                              0000008C
+PIE2                              0000008D
+PIR1                              0000000C
+PIR2                              0000000D
+PORTA                             00000005
+PORTB                             00000006
+PORTC                             00000007
+PORTD                             00000008
+PORTE                             00000009
+PR2                               00000092
+PRSEN                             00000007
+PS0                               00000000
+PS1                               00000001
+PS2                               00000002
+PSA                               00000003
+PSSAC0                            00000002
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 19
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+PSSAC1                            00000003
+PSSBD0                            00000000
+PSSBD1                            00000001
+PSTRCON                           0000009D
+PULSR                             00000002
+PULSS                             00000003
+PWM1CON                           0000009B
+R                                 00000002
+RA0                               00000000
+RA1                               00000001
+RA2                               00000002
+RA3                               00000003
+RA4                               00000004
+RA5                               00000005
+RA6                               00000006
+RA7                               00000007
+RB0                               00000000
+RB1                               00000001
+RB2                               00000002
+RB3                               00000003
+RB4                               00000004
+RB5                               00000005
+RB6                               00000006
+RB7                               00000007
+RBIE                              00000003
+RBIF                              00000000
+RC0                               00000000
+RC1                               00000001
+RC2                               00000002
+RC3                               00000003
+RC4                               00000004
+RC5                               00000005
+RC6                               00000006
+RC7                               00000007
+RC8_9                             00000006
+RC9                               00000006
+RCD8                              00000000
+RCEN                              00000003
+RCIDL                             00000006
+RCIE                              00000005
+RCIF                              00000005
+RCREG                             0000001A
+RCSTA                             00000018
+RD                                00000000
+RD0                               00000000
+RD1                               00000001
+RD2                               00000002
+RD3                               00000003
+RD4                               00000004
+RD5                               00000005
+RD6                               00000006
+RD7                               00000007
+RE0                               00000000
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 20
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+RE1                               00000001
+RE2                               00000002
+RE3                               00000003
+READ_WRITE                        00000002
+RETARDO                           000000F9
+RETARDO_B                         00000102
+RP0                               00000005
+RP1                               00000006
+RSEN                              00000001
+RX9                               00000006
+RX9D                              00000000
+R_MIN                             0000002E
+R_NOT_W                           00000002
+R_SEG                             00000031
+R_W                               00000002
+S                                 00000003
+SBOREN                            00000004
+SCKP                              00000004
+SCS                               00000000
+SELECT                            00000026
+SEN                               00000000
+SENDB                             00000003
+SMP                               00000007
+SPBRG                             00000099
+SPBRGH                            0000009A
+SPEN                              00000007
+SR0                               00000006
+SR1                               00000007
+SRCON                             00000185
+SREN                              00000005
+SSPADD                            00000093
+SSPBUF                            00000013
+SSPCON                            00000014
+SSPCON2                           00000091
+SSPEN                             00000005
+SSPIE                             00000003
+SSPIF                             00000003
+SSPM0                             00000000
+SSPM1                             00000001
+SSPM2                             00000002
+SSPM3                             00000003
+SSPMSK                            00000093
+SSPOV                             00000006
+SSPSTAT                           00000094
+STATUS                            00000003
+STRA                              00000000
+STRB                              00000001
+STRC                              00000002
+STRD                              00000003
+STRSYNC                           00000004
+SWDTEN                            00000000
+SYNC                              00000004
+T0CS                              00000005
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 21
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+T0IE                              00000005
+T0IF                              00000002
+T0SE                              00000004
+T1CKPS0                           00000004
+T1CKPS1                           00000005
+T1CON                             00000010
+T1GINV                            00000007
+T1GIV                             00000007
+T1GSS                             00000001
+T1INSYNC                          00000002
+T1OSCEN                           00000003
+T1SYNC                            00000002
+T1m40s                            00000037
+T2CKPS0                           00000000
+T2CKPS1                           00000001
+T2CON                             00000012
+T2m30s                            00000041
+T3m20s                            0000004B
+T4m10s                            00000055
+T50s                              0000002D
+TABLA                             000007D0
+TEMPORIZAR                        00000079
+TMR0                              00000001
+TMR0IE                            00000005
+TMR0IF                            00000002
+TMR1                              0000000E
+TMR1CS                            00000001
+TMR1GE                            00000006
+TMR1H                             0000000F
+TMR1IE                            00000000
+TMR1IF                            00000000
+TMR1L                             0000000E
+TMR1ON                            00000000
+TMR2                              00000011
+TMR2IE                            00000001
+TMR2IF                            00000001
+TMR2ON                            00000002
+TOUTPS0                           00000003
+TOUTPS1                           00000004
+TOUTPS2                           00000005
+TOUTPS3                           00000006
+TRISA                             00000085
+TRISA0                            00000000
+TRISA1                            00000001
+TRISA2                            00000002
+TRISA3                            00000003
+TRISA4                            00000004
+TRISA5                            00000005
+TRISA6                            00000006
+TRISA7                            00000007
+TRISB                             00000086
+TRISB0                            00000000
+TRISB1                            00000001
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 22
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TRISB2                            00000002
+TRISB3                            00000003
+TRISB4                            00000004
+TRISB5                            00000005
+TRISB6                            00000006
+TRISB7                            00000007
+TRISC                             00000087
+TRISC0                            00000000
+TRISC1                            00000001
+TRISC2                            00000002
+TRISC3                            00000003
+TRISC4                            00000004
+TRISC5                            00000005
+TRISC6                            00000006
+TRISC7                            00000007
+TRISD                             00000088
+TRISD0                            00000000
+TRISD1                            00000001
+TRISD2                            00000002
+TRISD3                            00000003
+TRISD4                            00000004
+TRISD5                            00000005
+TRISD6                            00000006
+TRISD7                            00000007
+TRISE                             00000089
+TRISE0                            00000000
+TRISE1                            00000001
+TRISE2                            00000002
+TRISE3                            00000003
+TRMT                              00000001
+TUN0                              00000000
+TUN1                              00000001
+TUN2                              00000002
+TUN3                              00000003
+TUN4                              00000004
+TX8_9                             00000006
+TX9                               00000006
+TX9D                              00000000
+TXD8                              00000000
+TXEN                              00000005
+TXIE                              00000004
+TXIF                              00000004
+TXREG                             00000019
+TXSTA                             00000098
+U                                 0000002D
+UA                                00000001
+ULPWUE                            00000005
+ULPWUIE                           00000002
+ULPWUIF                           00000002
+UNIDADES_M                        00000068
+UNIDADES_S                        00000075
+UNI_MINUTOS                       00000030
+UNI_SEGUNDOS                      00000033
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 23
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+VCFG0                             00000004
+VCFG1                             00000005
+VENTANA                           00000020
+VISUALIZAR                        000000BA
+VR0                               00000000
+VR1                               00000001
+VR2                               00000002
+VR3                               00000003
+VRCON                             00000097
+VREN                              00000007
+VROE                              00000006
+VRR                               00000005
+VRSS                              00000004
+W                                 00000000
+WCOL                              00000007
+WDTCON                            00000105
+WDTPS0                            00000001
+WDTPS1                            00000002
+WDTPS2                            00000003
+WDTPS3                            00000004
+WPUB                              00000095
+WPUB0                             00000000
+WPUB1                             00000001
+WPUB2                             00000002
+WPUB3                             00000003
+WPUB4                             00000004
+WPUB5                             00000005
+WPUB6                             00000006
+WPUB7                             00000007
+WR                                00000001
+WREN                              00000002
+WRERR                             00000003
+WUE                               00000001
+Z                                 00000002
+_.org_0_0082                      00000082
+_.org_0_0088                      00000088
+_.org_0_00A0                      000000A0
+_.org_0_00C7                      000000C7
+_.org_0_00F7                      000000F7
+_.org_0_00FE                      000000FE
+_.org_0_0100                      00000100
+_.org_0_0109                      00000109
+_.org_0_010B                      0000010B
+_.org_0_010D                      0000010D
+_.org_0_011A                      0000011A
+_.org_2_180E                      0000180E
+_BOR21V                           00003EFF
+_BOR40V                           00003FFF
+_BOR4V_BOR21V                     00003EFF
+_BOR4V_BOR40V                     00003FFF
+_BOREN_NSLEEP                     00003EFF
+_BOREN_OFF                        00003CFF
+_BOREN_ON                         00003FFF
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 24
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_BOREN_SBODEN                     00003DFF
+_BOR_NSLEEP                       00003EFF
+_BOR_OFF                          00003CFF
+_BOR_ON                           00003FFF
+_BOR_SBODEN                       00003DFF
+_CONFIG1                          00002007
+_CONFIG2                          00002008
+_CPD_OFF                          00003FFF
+_CPD_ON                           00003F7F
+_CP_OFF                           00003FFF
+_CP_ON                            00003FBF
+_DEBUG_OFF                        00003FFF
+_DEBUG_ON                         00001FFF
+_DEVID1                           00002006
+_EC_OSC                           00003FFB
+_EXTRC                            00003FFF
+_EXTRCIO                          00003FFE
+_EXTRC_OSC_CLKOUT                 00003FFF
+_EXTRC_OSC_NOCLKOUT               00003FFE
+_FCMEN_OFF                        000037FF
+_FCMEN_ON                         00003FFF
+_FOSC_EC                          00003FFB
+_FOSC_EXTRC_CLKOUT                00003FFF
+_FOSC_EXTRC_NOCLKOUT              00003FFE
+_FOSC_HS                          00003FFA
+_FOSC_INTRC_CLKOUT                00003FFD
+_FOSC_INTRC_NOCLKOUT              00003FFC
+_FOSC_LP                          00003FF8
+_FOSC_XT                          00003FF9
+_HS_OSC                           00003FFA
+_IDLOC0                           00002000
+_IDLOC1                           00002001
+_IDLOC2                           00002002
+_IDLOC3                           00002003
+_IESO_OFF                         00003BFF
+_IESO_ON                          00003FFF
+_INTOSC                           00003FFD
+_INTOSCIO                         00003FFC
+_INTRC_OSC_CLKOUT                 00003FFD
+_INTRC_OSC_NOCLKOUT               00003FFC
+_LP_OSC                           00003FF8
+_LVP_OFF                          00002FFF
+_LVP_ON                           00003FFF
+_MCLRE_OFF                        00003FDF
+_MCLRE_ON                         00003FFF
+_PWRTE_OFF                        00003FFF
+_PWRTE_ON                         00003FEF
+_WDTE_OFF                         00003FF7
+_WDTE_ON                          00003FFF
+_WDT_OFF                          00003FF7
+_WDT_ON                           00003FFF
+_WRT_1FOURTH                      00003BFF
+_WRT_256                          00003DFF
+MPASM 5.72                          MAIN.ASM   4-26-2017  23:57:10         PAGE 25
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_WRT_HALF                         000039FF
+_WRT_OFF                          00003FFF
+_XT_OSC                           00003FF9
+__16F887                          00000001
+
+Errors   :     1
+Warnings :    30 reported,     0 suppressed
+Messages :    20 reported,     0 suppressed
+
+
