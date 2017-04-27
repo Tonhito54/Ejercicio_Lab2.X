@@ -2,6 +2,7 @@ CBLOCK
     M				    ;valor final de tabla de mensaje de reset (MENSAJE0)
 ENDC    
 
+;DESPLAZAMIENTO DE TODAS LAS VENTANAS 
 DESPLAZAR:
     CALL    DESPLAZA_CARACTER	    ;desplazamiento de caracter
     MOVF    K,0			    ;posicion inicial en la tabla
@@ -19,6 +20,7 @@ DESPLAZAR:
     CLRF    K			    ;limpieza del contador K
 RETURN
 
+;DESPLAZAMIENTO DE CADA CARACTER EN LA SIGUIENTE VENTANA
 DESPLAZA_CARACTER:
     MOVLW   VENTANA		    ;direccion 0X20
     MOVWF   FSR			    ;asignacion al apuntador
