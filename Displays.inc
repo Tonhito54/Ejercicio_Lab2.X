@@ -1,4 +1,4 @@
-
+;ASIGNACION DE LAS VENTANAS A CADA DISPLAY CORRESPONDIENTE
 DISPLAYS:  
     ;VENTANA 1 DISPLAY 5
     ;se le asigna al display 5 un valor fijo de 0
