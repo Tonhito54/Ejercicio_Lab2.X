@@ -8,6 +8,7 @@ CBLOCK
     UNI_SEGUNDOS			;unidades de segundos
 ENDC
   
+;CONVERSOR DE MINUTOS   
 CONVERSOR_M:				;conversor de minutos
     CLRF    DEC_MINUTOS			;limpieza de decenas de minutos
     CLRF    UNI_MINUTOS			;limpieza de unidades de minutos
@@ -26,7 +27,8 @@ UNIDADES_M:
     MOVWF   UNI_MINUTOS			;se asigna el resultado a unidades de minutos 
     
 RETURN
-    
+
+;CONVERSOR DE SEGUNDOS
 CONVERSOR_S:				;conversor de segundos
     CLRF    DEC_SEGUNDOS		;limpieza de decenas de segundos
     CLRF    UNI_SEGUNDOS		;limpieza de unidades de segundos
